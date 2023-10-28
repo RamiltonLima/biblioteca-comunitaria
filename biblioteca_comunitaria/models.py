@@ -18,6 +18,9 @@ class Leitor(Base):
     def representacao(self):
         return {'ID': self.id, 'Nome': self.nome, 'E-mail': self.email}
     
+    def backup(self):
+        return self.representacao()
+    
     def __str__(self):
         return f'({self.id}) {self.nome}'
 
@@ -42,6 +45,8 @@ class Livro(Base):
             'E-mail do Apoiador': self.apoiador_email
         }
 
+    def backup(self):
+        return self.representacao()
     
     def __str__(self):
         return f'({self.id}) {self.nome}'
@@ -72,6 +77,18 @@ class Emprestimo(Base):
             'Devolvido' : self.terminado
         }
 
+
+    def backup(self):
+        return {
+            'ID': self.id,
+            'Leitor ID':self.leitor.id,
+            'Leitor': self.leitor.nome,
+            'Livro ID': self.livro_id,
+            'Livro': self.livro.nome,
+            'Retirada em': self.data_inicio,
+            'Devolver em': self.data_fim,
+            'Devolvido' : self.terminado
+        }
 
 # class Ebook(Base):
 #     __tablename__ = 'ebooks'

@@ -23,8 +23,8 @@ class Biblioteca():
             layout="wide",
             initial_sidebar_state="expanded",
             menu_items={
-                'Precisa de Ajuda?': 'mailto:ramilton.silva.lima@live.com',
-                'Achou um erro?': "mailto:ramilton.silva.lima@live.com",
+                'Get help': 'mailto:ramilton.silva.lima@live.com',
+                'Report a bug': "mailto:ramilton.silva.lima@live.com",
                 'About': "Para compartilhar livros"
             }
         )
@@ -52,6 +52,14 @@ class Biblioteca():
             'Livros: Remover': self.remover_livro,
             'Livros: Ver': self.ver_livros,
             # 'PDF também é livro' : self.ebook
+        }
+
+        self.secao_livros = {
+            'Livros: Adicionar': self.cadastrar_livro,
+            'Livros: Remover': self.remover_livro,
+            'Livros: Ver': self.ver_livros,
+            # 'PDF também é livro' : self.ebook
+            'Backup dos dados' : self.backup_dados
         }
 
         self.todas_secoes = dict()
@@ -276,6 +284,31 @@ class Biblioteca():
                 emprestimo.data_fim = datetime.now().date()
                 session.commit()
                 st.success(f'Obrigado! Devolvido com sucesso')
+
+    def backup_dados(self):
+        st.header('Baixe os dados da Biblioteca, quem sabe precise...')
+
+        todos_livros = session.query(Livro).all()
+        todos_leitores = session.query(Leitor).all()
+        todos_emprestimos = session.query(Emprestimo).all()
+
+        def gerar_botao(consulta, nome_arquivo):
+            buffer = BytesIO()
+            dados = [item.backup() for item in consulta]
+            df = pd.DataFrame(dados)
+            if not df.empty:
+                df.to_csv(buffer, index=False, encoding='utf-8-sig', sep=';')
+
+                st.download_button(
+                    label=nome_arquivo,
+                    data=buffer,
+                    file_name=f'{nome_arquivo}.csv',
+                )
+
+        gerar_botao(todos_livros, 'Livros')
+        gerar_botao(todos_leitores, 'Leitores')
+        gerar_botao(todos_emprestimos, 'Emprestimos')
+
 
 
 biblioteca = Biblioteca()
