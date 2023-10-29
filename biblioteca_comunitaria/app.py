@@ -1,12 +1,14 @@
 import streamlit as st
 from sqlalchemy import create_engine, or_, and_
 from sqlalchemy.orm import sessionmaker
-from models import HEROI_INONIMADO, Base, Livro, Leitor, Emprestimo  # , Ebook
+from models import HEROI_INONIMADO, Base, Livro, Leitor, Emprestimo, Ebook
 import pandas as pd
 import numpy as np
 import re
 from io import BytesIO
 from datetime import datetime
+import zipfile
+
 
 engine = create_engine('sqlite:///estoque.db')
 Session = sessionmaker(bind=engine)
@@ -29,49 +31,34 @@ class Biblioteca():
             }
         )
 
+        
+
         st.sidebar.title('Vamos lá!')
 
-        self.secao_home = {
-            'Qualiteca': self.home
-        }
-
-        self.secao_emprestimos = {
+        self.secao = {
+            'Qualiteca': self.home,
             'Emprestar': self.cadastrar_emprestimo,
             'Devolver': self.terminar_emprestimo,
-            'Ver empréstimos': self.ver_emprestimos
-        }
-
-        self.secao_leitores = {
+            'Ver empréstimos': self.ver_emprestimos,
             'Leitores: Adicionar': self.cadastrar_leitor,
             'Leitores: Remover': self.remover_leitor,
             'Leitores: Ver': self.ver_leitores,
-        }
-
-        self.secao_livros = {
             'Livros: Adicionar': self.cadastrar_livro,
             'Livros: Remover': self.remover_livro,
             'Livros: Ver': self.ver_livros,
-            # 'PDF também é livro' : self.ebook
-        }
-
-        self.secao_livros = {
             'Livros: Adicionar': self.cadastrar_livro,
             'Livros: Remover': self.remover_livro,
             'Livros: Ver': self.ver_livros,
-            # 'PDF também é livro' : self.ebook
+            'Ebook/PDF: Adicionar': self.cadastrar_ebooks,
+            'Ebook/PDF: Remover': self.remover_ebooks,
+            'Ebook/PDF: Ver': self.ver_ebooks,
             'Backup dos dados' : self.backup_dados
         }
 
-        self.todas_secoes = dict()
-        self.todas_secoes.update(self.secao_home)
-        self.todas_secoes.update(self.secao_emprestimos)
-        self.todas_secoes.update(self.secao_leitores)
-        self.todas_secoes.update(self.secao_livros)
+        self.selecao = st.sidebar.radio(
+            'Vamos lá', options=list(self.secao.keys()))
 
-        selecao = st.sidebar.radio(
-            'Vamos lá', options=list(self.todas_secoes.keys()))
-
-        pagina_selecionada = self.todas_secoes[selecao]
+        pagina_selecionada = self.secao[self.selecao]
         pagina_selecionada()
 
     def home(self):
@@ -94,7 +81,7 @@ class Biblioteca():
         if df_consulta.empty:
             st.write('...Na verdade, não há nada aqui ainda.')
         else:
-            st.dataframe(df_consulta, hide_index=True)
+            st.dataframe(df_consulta, hide_index=True, use_container_width=True)
 
     def ver_livros(self):
         st.header('Estes são os livros que temos.')
@@ -102,7 +89,7 @@ class Biblioteca():
         self.__dataframes(todos_livros)
 
     def cadastrar_livro(self):
-        st.header('Legal! Recebemos mais este!')
+        st.header('Legal! Mais um livro!')
 
         nome = st.text_input('Nome do livro', max_chars=500,
                              help="Coloque o nome completo da obra")
@@ -129,7 +116,7 @@ class Biblioteca():
                 st.error('Preciso saber o nome do livro')
 
     def remover_livro(self):
-        st.header('Ta bem, vamos tirar o livro da biblioteca')
+        st.header('Menos um livro')
         livro_id = st.number_input(
             "Qual o ID do livro que deseja remover?", step=0, value=None)
 
@@ -262,7 +249,6 @@ class Biblioteca():
                     session.commit()
                     st.success(f'Pronto! o "{livro.nome}" foi emprestado para {leitor}, de {datetime.now().date()} até {devolver_em}')
 
-
     def terminar_emprestimo(self):
         st.header('Obrigado! Parabéns! Volte sempre.')
         emprestimo_id = st.number_input(
@@ -284,6 +270,72 @@ class Biblioteca():
                 emprestimo.data_fim = datetime.now().date()
                 session.commit()
                 st.success(f'Obrigado! Devolvido com sucesso')
+
+
+    def ver_ebooks(self):
+        def baixar():
+            print('olá')
+
+        st.header('Estes da para baixar sem precisar devolver')
+
+        ebook_id = st.number_input("Qual o ID do PDF que quer baixar?", step=0, value=None)
+        botao = st.button("Procurar ebook", on_click=baixar, key='procurar_ebook')
+        if botao:
+            ebook = session.query(Ebook).filter(Ebook.id == ebook_id).first()
+            if not ebook:
+                st.error("Nenhum ebook encontrado com este ID")
+            else:
+                st.success('Encontrado')
+                pdf_bytes = ebook.conteudo
+                st.download_button(
+                    label="Baixar",
+                    data=pdf_bytes,
+                    file_name=f"{ebook.nome}",
+                    mime="application/pdf",
+                )
+
+        st.divider()
+        st.header('Listagem de ebooks')
+        todos_ebooks = session.query(Ebook).all()
+        self.__dataframes(todos_ebooks)
+
+        
+    def cadastrar_ebooks(self):
+        st.header('Compartilhe seu ebook')
+        ebook = st.file_uploader('Suba seu arquivo PDF', type=['pdf'])
+
+        if st.button('Guardar ebook'):
+            if not ebook:
+                st.error('Nenhum arquivo para guardar')
+            else:
+                conteudo = ebook.read()
+                novo_ebook = Ebook(nome=ebook.name, conteudo=conteudo)
+                session.add(novo_ebook)
+                session.commit()
+                st.success('Pronto! PDF Guardado com sucesso')
+
+    def remover_ebooks(self):
+        st.header('Ok. Ninguem mais vai ler este')
+        ebook_id = st.number_input(
+            "Qual o ID do ebook", step=0, value=None)
+
+        if not st.button('Remover Ebook'):
+            pass
+
+        elif not ebook_id:
+            st.error(f'Preciso saber qual ebook quer remover.')
+
+        else:
+            ebook = session.query(Ebook).filter(
+                Ebook.id == ebook_id).first()
+            if not ebook:
+                st.error(f'Não foi encontrado nenhum ebook com o ID {ebook_id}.')
+            else:
+                session.delete(ebook)
+                session.commit()
+
+                st.success(
+                    f'{ebook.nome}({ebook.id}) removido com sucesso')
 
     def backup_dados(self):
         st.header('Baixe os dados da Biblioteca, quem sabe precise...')
@@ -308,6 +360,21 @@ class Biblioteca():
         gerar_botao(todos_livros, 'Livros')
         gerar_botao(todos_leitores, 'Leitores')
         gerar_botao(todos_emprestimos, 'Emprestimos')
+
+
+        ebooks = session.query(Ebook).all()
+        if ebooks:
+            buffer_todos_ebooks = BytesIO()
+            with zipfile.ZipFile(buffer_todos_ebooks, "w", zipfile.ZIP_DEFLATED, False) as zip_file:
+                for ebook in ebooks:
+                    zip_file.writestr(f"{ebook.id}-{ebook.nome}", ebook.conteudo)
+
+            st.download_button(
+                label="Ebooks",
+                data=buffer_todos_ebooks,
+                file_name="ebooks.zip",
+                mime="application/zip"
+            )
 
 
 

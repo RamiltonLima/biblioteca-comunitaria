@@ -10,9 +10,15 @@ __pycache__/
 # C extensions
 *.so
 
+#sqlite
+estoque.db
+
 #vscode
 .vscode
 .vscode/
+vscode/
+/vscode
+/.vscode
 
 # Distribution / packaging
 .Python

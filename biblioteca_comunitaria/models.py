@@ -90,21 +90,21 @@ class Emprestimo(Base):
             'Devolvido' : self.terminado
         }
 
-# class Ebook(Base):
-#     __tablename__ = 'ebooks'
-#     id = Column(Integer, primary_key=True)
-#     nome = Column(String, nullable=False)
-#     conteudo = Column(LargeBinary, nullable=False)
+class Ebook(Base):
+    __tablename__ = 'ebooks'
+    id = Column(Integer, primary_key=True)
+    nome = Column(String, nullable=False)
+    conteudo = Column(LargeBinary, nullable=False)
 
-#     def __repr__(self):
-#         return f"<Ebook(titulo='{self.titulo}')>"
+    def __repr__(self):
+        return f"<Ebook(titulo='{self.titulo}')>"
     
 
-#     def representacao(self):
-#         return {
-#             'ID': self.id,
-#             'Nome': self.nome,
-#         }
+    def representacao(self):
+        return {
+            'ID': self.id,
+            'Nome': self.nome,
+        }
     
 
 
