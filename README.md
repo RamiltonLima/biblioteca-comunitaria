@@ -1,6 +1,6 @@
 # Bibiloteca Publica
 
-Ferramente livre para gerenciamento minimo de uma biblioteca comunitária
+Ferramenta livre para gerenciamento minimo de uma biblioteca comunitária
 
 ## Funcionalidades
 
