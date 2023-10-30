@@ -49,9 +49,9 @@ class Biblioteca():
             'Livros: Adicionar': self.cadastrar_livro,
             'Livros: Remover': self.remover_livro,
             'Livros: Ver': self.ver_livros,
-            'Ebook/PDF: Adicionar': self.cadastrar_ebooks,
-            'Ebook/PDF: Remover': self.remover_ebooks,
-            'Ebook/PDF: Ver': self.ver_ebooks,
+            # 'Ebook/PDF: Adicionar': self.cadastrar_ebooks,
+            # 'Ebook/PDF: Remover': self.remover_ebooks,
+            # 'Ebook/PDF: Ver': self.ver_ebooks,
             'Backup dos dados' : self.backup_dados
         }
 
@@ -362,19 +362,19 @@ class Biblioteca():
         gerar_botao(todos_emprestimos, 'Emprestimos')
 
 
-        ebooks = session.query(Ebook).all()
-        if ebooks:
-            buffer_todos_ebooks = BytesIO()
-            with zipfile.ZipFile(buffer_todos_ebooks, "w", zipfile.ZIP_DEFLATED, False) as zip_file:
-                for ebook in ebooks:
-                    zip_file.writestr(f"{ebook.id}-{ebook.nome}", ebook.conteudo)
+        # ebooks = session.query(Ebook).all()
+        # if ebooks:
+        #     buffer_todos_ebooks = BytesIO()
+        #     with zipfile.ZipFile(buffer_todos_ebooks, "w", zipfile.ZIP_DEFLATED, False) as zip_file:
+        #         for ebook in ebooks:
+        #             zip_file.writestr(f"{ebook.id}-{ebook.nome}", ebook.conteudo)
 
-            st.download_button(
-                label="Ebooks",
-                data=buffer_todos_ebooks,
-                file_name="ebooks.zip",
-                mime="application/zip"
-            )
+        #     st.download_button(
+        #         label="Ebooks",
+        #         data=buffer_todos_ebooks,
+        #         file_name="ebooks.zip",
+        #         mime="application/zip"
+        #     )
 
 
 
